@@ -1,0 +1,20 @@
+# CSC 453: Program 2 - Scheduler Simulator
+Ansh Pandey
+
+## Questions
+
+1. For what types of workloads does SRTN deliver the same turnaround times as FIFO?
+
+    To have the same GANT chart all the jobs would have to have the same arrival time and the burst time of 1. However, if we are just looking at the final output, SRTN and FIFO can have the same workload if all the jobs arrive at the same time and have the same burst times.
+
+2. For what types of workloads and quantum lengths does SRTN deliver the same response times as RR?
+
+    One example would be if RR had a quantum length of 1 and all the jobs in SRTN artrived at the same time with the exact time burst time. 
+
+3. What happens to response time with SRTN as job lengths increase? Can you use the simulator to demonstrate the trend?
+
+    Since it is a pre-emptive algorithm, as the job length increases, their wait time gets longer since they are forced to stop after a few bursts for shorter jobs. As a result, its turnaround time also increases since the time from arrival to completion is streached out. Moreover, this increases the risk of stravtion since if a long job arrives at time 0, but keeps getting prempted by shorter jobs that come after it, it might not get the right amount of resouces in order to complete its execution. This could be simulated by the system if a file was provided where a long job arrives at time 0, and several short jobs arrive later. The long job will be repeatedly preempted, increasing its response and turnaround time.
+
+4. What happens to response time with RR as quantum lengths increase? Can you write an equation that gives the worst-case response time, given N jobs?
+
+    As the quantum increases, the response time for jobs arriving at similar times would also increase becasue the previous jobs that were scheduled will be utilizing resources for longer before being prempted. That being said, based on our implementation of RR, if the quantum is sufficiently large, the RR will mimic the behivor of a FIFO system, where each job that is scheduled will run to completion before the next job is run. Since response time is time from arrival to first output, the worst case given N jobs and a quantum of q would be $(N-1) * q$.
