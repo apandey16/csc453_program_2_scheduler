@@ -56,11 +56,11 @@ def fifo(jobs):
             cur_time = arrival_time
         wait_time = cur_time - arrival_time
         turnaround_time = wait_time + run_time
-        sim_schedule.append((job_id, wait_time, turnaround_time))
+        sim_schedule.append((job_id, wait_time, turnaround_time, arrival_time))
         
         cur_time += run_time
     
-    return sorted(sim_schedule, key=lambda x: (x[1], x[0]))
+    return sorted(sim_schedule, key=lambda x: (x[3], x[0]))
 
 def srtn_scheduler(jobs):
     sorted_jobs = sorted(jobs, key=lambda x: (x[1], x[0]))
@@ -89,12 +89,12 @@ def srtn_scheduler(jobs):
                     job_metadata[job_id]["turnaround"] += 1
             
             if job_metadata[running_job]["remaining"] == 0:
-                sim_schedule.append((running_job, job_metadata[running_job]["wait"], job_metadata[running_job]["turnaround"]))
+                sim_schedule.append((running_job, job_metadata[running_job]["wait"], job_metadata[running_job]["turnaround"], job_metadata[running_job]["arrival"]))
                 del job_metadata[running_job]
         
         cur_time += 1
     
-    return sorted(sim_schedule, key=lambda x: (x[1], x[0]))
+    return sorted(sim_schedule, key=lambda x: (x[3], x[0]))
 
 def round_robin_scheduler(jobs, quantum):
     sorted_jobs = sorted(jobs, key=lambda x: (x[1], x[0]))
@@ -132,21 +132,21 @@ def round_robin_scheduler(jobs, quantum):
             
             if job_metadata[running_job]["remaining"] == 0:
                 turnaround_time = cur_time - job_metadata[running_job]["arrival"]
-                sim_schedule.append((running_job, job_metadata[running_job]["wait"], turnaround_time))
+                sim_schedule.append((running_job, job_metadata[running_job]["wait"], turnaround_time, job_metadata[running_job]["arrival"]))
                 del job_metadata[running_job]
             else:
                 ready_queue.append(running_job)
         else:
             cur_time += 1
     
-    return sorted(sim_schedule, key=lambda x: (x[1], x[0]))
+    return sorted(sim_schedule, key=lambda x: (x[3], x[0]))
 
 def display_simulated_schedule(sim_schedule):
     total_turnaround = 0
     total_wait = 0
     job_ctr = 0
     
-    for job_id, wait_time, turnaround_time in sim_schedule:
+    for job_id, wait_time, turnaround_time, arrival_time in sim_schedule:
         print(f"Job {job_id:3d} -- Turnaround {turnaround_time:3.2f}  Wait {wait_time:3.2f}")
         total_turnaround += turnaround_time
         total_wait += wait_time
