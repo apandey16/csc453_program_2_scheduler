@@ -1,0 +1,81 @@
+﻿SRTN
+Process        arrival        burst
+P0                T=3                4T
+P1                T=5                2T
+P2                T=1                3T
+P3                T=5                4T
+P4                T=6                3T
+
+
+Process         wait                 turn-around
+P0                3T                7T
+P1                0T                2T
+P2                0T                3T
+P3                8T                12T
+P4                4T                7T
+
+
+average wait:3.0
+average turn around:6.2
+
+
+ELABORATION
+[--][P2][P2][P2][P0][P1][P1][P0][P0][P0][P4][P4][P4][P3][P3][P3][P3]
+T=0             T=4             T=8             T=12            T=16
+
+
+
+
+RR Q=4
+Process        arrival        burst
+P0                T=0                5T
+P1                T=0                2T
+P2                T=0                5T
+P3                T=1                3T
+P4                T=0                2T
+
+
+average wait:9.6
+average turn around:13.0
+
+
+ELABORATION
+
+
+[P0][P0][P0][P0][P1][P1][P2][P2][P2][P2][P4][P4][P3][P3][P3][P0][P2]
+T=0             T=4             T=8             T=12            T=16
+
+
+Process         wait                turn-around
+P0                11T                16T
+P1                4T                6T
+P2                12T                17T
+P3                11T                14T
+P4                10T                12T
+
+
+
+
+FCFS
+Process        arrival        burst
+P0                T=2                1T
+P1                T=1                4T
+P2                T=6                4T
+P3                T=2                6T
+P4                T=0                3T
+
+
+average wait:4.2
+average turn around:7.8
+
+
+[P4][P4][P4][P1][P1][P1][P1][P0][P3][P3][P3][P3][P3][P3][P2][P2][P2][P2]
+T=0             T=4             T=8             T=12            T=16    
+
+
+Process         wait                 turn-around
+P0                5T                6T
+P1                2T                6T
+P2                8T                12T
+P3                6T                12T
+P4                0T                3T

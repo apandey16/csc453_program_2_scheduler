@@ -63,81 +63,100 @@ def fifo(jobs):
     return sorted(sim_schedule, key=lambda x: (x[3], x[0]))
 
 def srtn_scheduler(jobs):
-    sorted_jobs = sorted(jobs, key=lambda x: (x[1], x[0]))
-    cur_time = 0
-    sim_schedule = []
+    events = []
+    for job_id, arrival_time, run_time in jobs:
+        events.append((arrival_time, 'arrival', job_id, run_time))
     
-    job_metadata = {}
-    for job_id, arrival_time, run_time in sorted_jobs:
-        job_metadata[job_id] = {"remaining": run_time, "arrival": arrival_time, "wait": 0, "turnaround": 0}
-
-    while job_metadata:
-        possible_jobs = []
-        for job_id in job_metadata:
-            if job_metadata[job_id]["arrival"] <= cur_time:
-                possible_jobs.append((job_id, job_metadata[job_id]["remaining"]))
+    events.sort()
+    
+    cur_time = 0
+    ready_queue = []
+    sim_schedule = []
+    job_start_times = {}
+    
+    event_idx = 0
+    
+    while event_idx < len(events) or ready_queue:
+        while event_idx < len(events) and events[event_idx][0] <= cur_time:
+            arrival_time, event_type, job_id, run_time = events[event_idx]
+            ready_queue.append((run_time, job_id, arrival_time, run_time))
+            ready_queue.sort()
+            event_idx += 1
         
-        if possible_jobs:
-            running_job, execution_time = min(possible_jobs, key=lambda x: (x[1], x[0]))
-
-            job_metadata[running_job]["remaining"] -= 1
-            job_metadata[running_job]["turnaround"] += 1
+        if ready_queue:
+            remaining_time, job_id, arrival_time, original_run_time = ready_queue.pop(0)
             
-            for job_id, execution_time in possible_jobs:
-                if job_id != running_job:  
-                    job_metadata[job_id]["wait"] += 1
-                    job_metadata[job_id]["turnaround"] += 1
+            if job_id not in job_start_times:
+                job_start_times[job_id] = cur_time
             
-            if job_metadata[running_job]["remaining"] == 0:
-                sim_schedule.append((running_job, job_metadata[running_job]["wait"], job_metadata[running_job]["turnaround"], job_metadata[running_job]["arrival"]))
-                del job_metadata[running_job]
-        
-        cur_time += 1
+            next_event_time = float('inf')
+            if event_idx < len(events):
+                next_event_time = events[event_idx][0]
+            
+            run_time = min(1, remaining_time, next_event_time - cur_time)
+            if run_time <= 0:
+                run_time = 1
+            
+            cur_time += run_time
+            remaining_time -= run_time
+            
+            if remaining_time > 0:
+                ready_queue.append((remaining_time, job_id, arrival_time, original_run_time))
+                ready_queue.sort()
+            else:
+                turnaround_time = cur_time - arrival_time
+                wait_time = turnaround_time - original_run_time
+                sim_schedule.append((job_id, wait_time, turnaround_time, arrival_time))
+        else:
+            if event_idx < len(events):
+                cur_time = events[event_idx][0]
+            else:
+                break
     
     return sorted(sim_schedule, key=lambda x: (x[3], x[0]))
 
 def round_robin_scheduler(jobs, quantum):
-    sorted_jobs = sorted(jobs, key=lambda x: (x[1], x[0]))
+    events = []
+    for job_id, arrival_time, run_time in jobs:
+        events.append((arrival_time, 'arrival', job_id, run_time))
+    
+    events.sort()
+    
     cur_time = 0
+    ready_queue = []
     sim_schedule = []
     
-    job_metadata = {}
-    for job_id, arrival_time, run_time in sorted_jobs:
-        job_metadata[job_id] = { "remaining": run_time, "arrival": arrival_time, "wait": 0, "last_run": arrival_time }
+    event_idx = 0
     
-    ready_queue = []
-    
-    while job_metadata:
-        for job_id, arrival_time, execution_time in sorted_jobs:
-            if job_id in job_metadata and job_metadata[job_id]["arrival"] <= cur_time and job_id not in ready_queue:
-                ready_queue.append(job_id)
+    while event_idx < len(events) or ready_queue:
+        while event_idx < len(events) and events[event_idx][0] <= cur_time:
+            arrival_time, event_type, job_id, run_time = events[event_idx]
+            ready_queue.append((job_id, arrival_time, run_time, run_time))
+            event_idx += 1
         
         if ready_queue:
-            running_job = ready_queue.pop(0)
-
-            job_metadata[running_job]["wait"] += cur_time - job_metadata[running_job]["last_run"]
+            job_id, arrival_time, remaining_time, original_run_time = ready_queue.pop(0)
             
-            if job_metadata[running_job]["remaining"] >= quantum:
-                time_slice = quantum
+            run_time = min(quantum, remaining_time)
+            cur_time += run_time
+            remaining_time -= run_time
+            
+            while event_idx < len(events) and events[event_idx][0] <= cur_time:
+                arr_time, event_type, arr_job_id, arr_run_time = events[event_idx]
+                ready_queue.append((arr_job_id, arr_time, arr_run_time, arr_run_time))
+                event_idx += 1
+            
+            if remaining_time > 0:
+                ready_queue.append((job_id, arrival_time, remaining_time, original_run_time))
             else:
-                time_slice = job_metadata[running_job]["remaining"]
-            
-            job_metadata[running_job]["remaining"] -= time_slice
-            job_metadata[running_job]["last_run"] = cur_time + time_slice
-            cur_time += time_slice
-            
-            for job_id, arrival_time, execution_time in sorted_jobs:
-                if job_id in job_metadata and job_metadata[job_id]["arrival"] <= cur_time and job_id not in ready_queue and job_id != running_job:
-                    ready_queue.append(job_id)
-            
-            if job_metadata[running_job]["remaining"] == 0:
-                turnaround_time = cur_time - job_metadata[running_job]["arrival"]
-                sim_schedule.append((running_job, job_metadata[running_job]["wait"], turnaround_time, job_metadata[running_job]["arrival"]))
-                del job_metadata[running_job]
-            else:
-                ready_queue.append(running_job)
+                turnaround_time = cur_time - arrival_time
+                wait_time = turnaround_time - original_run_time
+                sim_schedule.append((job_id, wait_time, turnaround_time, arrival_time))
         else:
-            cur_time += 1
+            if event_idx < len(events):
+                cur_time = events[event_idx][0]
+            else:
+                break
     
     return sorted(sim_schedule, key=lambda x: (x[3], x[0]))
 
